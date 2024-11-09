@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Web Terminal</title>
+  <style>
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+      font-family: sans-serif;
+    }
+
+    .fullheight {
+      height: 100%;
+      background: black;
+    }
+  </style>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm/css/xterm.css" />
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script type="module">
+    import { Terminal } from "https://cdn.jsdelivr.net/npm/xterm@5.0.0/+esm";
+    import { SearchAddon } from "https://cdn.jsdelivr.net/npm/xterm-addon-search@0.12.0/+esm";
+    import { Unicode11Addon } from "https://cdn.jsdelivr.net/npm/xterm-addon-unicode11@0.3.0/+esm";
+
+    const WebTerminal = ({ websocketUrl }) => {
+      const terminalRef = React.useRef(null);
+
+      React.useEffect(() => {
+        const term = new Terminal({ cols: 80, rows: 24, allowProposedApi: true });
+        const searchAddon = new SearchAddon();
+        const unicode11Addon = new Unicode11Addon();
+
+        term.loadAddon(searchAddon);
+        term.loadAddon(unicode11Addon);
+        term.open(terminalRef.current);
+
+        const ws = new WebSocket(websocketUrl);
+
+        ws.addEventListener("open", () => {
+          console.info("WebSocket connected to:", websocketUrl);
+        });
+
+        ws.addEventListener("message", (event) => {
+          const message = JSON.parse(event.data);
+          if (message.type === "error") {
+            term.write(`\x1b[31m${message.output}\x1b[0m`);
+          } else if (message.type === "output") {
+            term.write(message.output);
+          }
+        });
+
+        term.onData((data) => ws.send(JSON.stringify({ input: data })));
+
+        term.onResize((size) => {
+          ws.send(JSON.stringify({ resize: [size.cols, size.rows] }));
+        });
+
+        return () => {
+          ws.close();
+          term.dispose();
+        };
+      }, [websocketUrl]);
+
+      return React.createElement("div", {
+        ref: terminalRef,
+        className: "fullheight",
+      });
+    };
+
+    const App = () => {
+      return React.createElement(WebTerminal, { websocketUrl: "ws://localhost:8999" });
+    };
+
+    ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App));
+  </script>
+</head>
+
+<body>
+  <div id="root" class="fullheight"></div>
+</body>
+
+</html>
