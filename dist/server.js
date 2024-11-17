@@ -15,7 +15,19 @@ const ENV_VARIABLES = {
 const app = express();
 const server = http.createServer(app);
 // CORS設定 - localhost:3000からのリクエストを許可
-app.use(cors({ origin: 'http://localhost:3000' }));
+// CORS設定 - 許可するオリジンを明示
+const allowedOrigins = ['http://localhost:3000', 'https://school.vteacher.biz'];
+app.use(cors({
+    origin: (origin, callback) => {
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        }
+        else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    // credentials: true,
+}));
 app.use(express.json());
 app.use("/", express.static(STATIC_DIR));
 const wss = new WebSocketServer({ server });
@@ -32,7 +44,7 @@ wss.on("connection", (ws) => {
     console.log("PTY process started with PID:", pty.pid);
     pty.onData((data) => {
         console.debug("PTY output:", data);
-        const isError = /(not found|error|No such file or directory|Unknown|cannot)/i.test(data);
+        const isError = /(not found|error|No such file or directory|Unknown|cannot|failed)/i.test(data);
         const messageType = isError ? "error" : "output";
         ws.send(JSON.stringify({ type: messageType, output: data }));
     });
