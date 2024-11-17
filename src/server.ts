@@ -41,7 +41,7 @@ wss.on("connection", (ws) => {
 
     pty.onData((data) => {
         console.debug("PTY output:", data);
-        const isError = /(not found|error|No such file or directory|Unknown|cannot)/i.test(data);
+        const isError = /(not found|error|No such file or directory|Unknown|cannot|failed)/i.test(data);
         const messageType = isError ? "error" : "output";
         ws.send(JSON.stringify({ type: messageType, output: data }));
     });
