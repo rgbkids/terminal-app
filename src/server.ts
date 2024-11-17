@@ -18,7 +18,19 @@ const app = express();
 const server = http.createServer(app);
 
 // CORS設定 - localhost:3000からのリクエストを許可
-app.use(cors({ origin: 'http://localhost:3000' }));
+// CORS設定 - 許可するオリジンを明示
+const allowedOrigins = ['http://localhost:3000', 'https://school.vteacher.biz'];
+
+app.use(cors({
+    origin: (origin, callback) => {
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    // credentials: true,
+}));
 
 app.use(express.json());
 app.use("/", express.static(STATIC_DIR));
