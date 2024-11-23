@@ -20,8 +20,8 @@ const ENV_VARIABLES = {
 
 const sslOptions = {
     key: fs.readFileSync(path.join(__dirname, '../ssl/private.key')),
-    cert: fs.readFileSync(path.join(__dirname, '../ssl/vteacher_biz.crt')),
-    ca: fs.readFileSync(path.join(__dirname, '../ssl/vteacher_biz.ca-bundle')),
+    cert: fs.readFileSync(path.join(__dirname, '../ssl/term-app.crt')),
+    ca: fs.readFileSync(path.join(__dirname, '../ssl/term-app.ca-bundle')),
 };
 
 const app = express();
